@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Register — JezanPlan</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --void: #05040d;
+      --deep: #0c0a1e;
+      --well: #110f24;
+      --surface: #16132e;
+      --raised: #1d1940;
+      --border: rgba(138,110,255,0.12);
+      --border-glow: rgba(138,110,255,0.35);
+      --plum: #8a6eff;
+      --violet: #6b45f5;
+      --lavender: #b8a0ff;
+      --mauve: #c9b8ff;
+      --rose: #e86bff;
+      --gold: #f0c97a;
+      --text: #ece8ff;
+      --text2: #9b93c4;
+      --muted: #5d5580;
+      --success: #7cf0b0;
+      --error: #ff6b8a;
+    }
+
+    * { -webkit-font-smoothing: antialiased; }
+
+    body {
+      font-family: 'Jost', sans-serif;
+      background: var(--void);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: stretch;
+      overflow: hidden;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background-image:
+        linear-gradient(rgba(138,110,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(138,110,255,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+    }
+
+    .atm {
+      position: fixed; border-radius: 50%; filter: blur(120px);
+      pointer-events: none; z-index: 0;
+    }
+    .atm-1 { width: 500px; height: 500px; background: radial-gradient(circle, rgba(232,107,255,0.16) 0%, transparent 70%); top: -150px; right: -100px; animation: pulse1 9s ease-in-out infinite alternate; }
+    .atm-2 { width: 450px; height: 450px; background: radial-gradient(circle, rgba(107,69,245,0.2) 0%, transparent 70%); bottom: -100px; left: -100px; animation: pulse2 11s ease-in-out infinite alternate; }
+
+    @keyframes pulse1 { from { transform: scale(1); } to { transform: scale(1.12) translate(-20px, 20px); } }
+    @keyframes pulse2 { from { transform: scale(1); } to { transform: scale(1.08) translate(15px, -15px); } }
+
+    /* Right decorative panel */
+    .right-deco {
+      position: relative; z-index: 1;
+      flex: 0 0 420px;
+      display: flex; flex-direction: column;
+      justify-content: center;
+      padding: 60px;
+      border-left: 1px solid var(--border);
+      background: linear-gradient(225deg, rgba(232,107,255,0.04) 0%, transparent 60%);
+      overflow: hidden;
+      order: 2;
+    }
+
+    .deco-ring {
+      position: absolute; top: -60px; right: -60px;
+      width: 260px; height: 260px;
+      border: 1px solid var(--border-glow);
+      border-radius: 50%;
+      opacity: 0.4;
+    }
+    .deco-ring::after {
+      content: '';
+      position: absolute; inset: 20px;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+    }
+
+    .deco-grid {
+      position: absolute; bottom: 40px; left: 40px; right: 40px;
+      display: grid; grid-template-columns: repeat(4,1fr); gap: 8px;
+      opacity: 0.06;
+    }
+    .deco-dot {
+      width: 4px; height: 4px; border-radius: 50%;
+      background: var(--lavender);
+      margin: auto;
+    }
+
+    .deco-content { position: relative; z-index: 1; }
+    .deco-eyebrow {
+      font-size: 0.65rem; font-weight: 600;
+      letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--plum); margin-bottom: 20px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .deco-eyebrow::before { content: ''; width: 24px; height: 1px; background: var(--plum); }
+
+    .deco-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 3.2rem; font-weight: 700; line-height: 1;
+      color: var(--text); margin-bottom: 24px;
+    }
+    .deco-title em {
+      font-style: italic;
+      background: linear-gradient(135deg, var(--lavender), var(--rose));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .deco-perks { display: flex; flex-direction: column; gap: 16px; margin-top: 32px; }
+    .perk {
+      display: flex; align-items: flex-start; gap: 14px;
+      padding: 14px 16px;
+      background: rgba(138,110,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .perk-icon { font-size: 1.1rem; line-height: 1.3; flex-shrink: 0; }
+    .perk-title { font-size: 0.85rem; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+    .perk-desc { font-size: 0.77rem; color: var(--muted); line-height: 1.5; }
+
+    /* Left: Form */
+    .left-panel {
+      flex: 1; order: 1;
+      display: flex; align-items: center; justify-content: center;
+      padding: 40px;
+      position: relative; z-index: 1;
+    }
+
+    .form-container {
+      width: 100%; max-width: 420px;
+      animation: riseIn 0.7s cubic-bezier(0.22,0.84,0.44,1) both;
+    }
+    @keyframes riseIn {
+      from { opacity: 0; transform: translateY(32px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .form-header { margin-bottom: 36px; }
+    .form-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2.4rem; font-weight: 600; line-height: 1.1;
+      color: var(--text); margin-bottom: 8px;
+    }
+    .form-subtitle { font-size: 0.875rem; color: var(--text2); font-weight: 300; }
+
+    .field-group { margin-bottom: 20px; }
+
+    .field-label {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 0.7rem; font-weight: 600;
+      color: var(--muted); letter-spacing: 0.12em;
+      text-transform: uppercase; margin-bottom: 10px;
+    }
+    .field-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    input {
+      width: 100%;
+      background: var(--well);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 18px;
+      color: var(--text);
+      font-family: 'Jost', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 400;
+      transition: all 0.25s ease;
+      outline: none;
+      letter-spacing: 0.02em;
+    }
+    input::placeholder { color: var(--muted); }
+    input:focus {
+      border-color: var(--border-glow);
+      background: var(--surface);
+      box-shadow: 0 0 0 3px rgba(138,110,255,0.08), inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+
+    .field-hint { font-size: 0.72rem; color: var(--muted); margin-top: 7px; letter-spacing: 0.02em; }
+
+    .btn-primary {
+      width: 100%;
+      padding: 15px 24px;
+      background: linear-gradient(135deg, var(--violet) 0%, var(--plum) 50%, var(--rose) 100%);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-family: 'Jost', sans-serif;
+      font-size: 0.875rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      margin-top: 8px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 24px rgba(107,69,245,0.35);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(107,69,245,0.5); }
+    .btn-primary:active { transform: translateY(0); }
+
+    .btn-shimmer {
+      position: absolute; inset: 0;
+      background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.15) 50%, transparent 60%);
+      background-size: 200% 100%;
+      animation: shimmer 3s ease-in-out infinite;
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    .msg {
+      margin-top: 16px; padding: 13px 16px;
+      border-radius: 8px; font-size: 0.85rem;
+      display: none; font-weight: 400;
+    }
+    .msg.success {
+      background: rgba(124,240,176,0.07);
+      border: 1px solid rgba(124,240,176,0.2);
+      color: var(--success);
+    }
+    .msg.error {
+      background: rgba(255,107,138,0.07);
+      border: 1px solid rgba(255,107,138,0.2);
+      color: var(--error);
+    }
+
+    .form-footer {
+      margin-top: 28px; padding-top: 24px;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      font-size: 0.85rem; color: var(--muted);
+    }
+    .form-footer a {
+      color: var(--lavender); text-decoration: none;
+      font-weight: 500; transition: color 0.2s;
+    }
+    .form-footer a:hover { color: var(--mauve); }
+
+    @media (max-width: 900px) {
+      .right-deco { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="atm atm-1"></div>
+  <div class="atm atm-2"></div>
+
+  <!-- Left: Form -->
+  <div class="left-panel">
+    <div class="form-container">
+      <div class="form-header">
+        <div class="form-title">Create account.</div>
+        <div class="form-subtitle">Join JezanPlan and start organizing with intention</div>
+      </div>
+
+      <div class="field-group">
+        <div class="field-label">Username</div>
+        <input type="text" id="username" placeholder="e.g. Jesa Mae Batin" maxlength="50" autocomplete="username"/>
+      </div>
+
+      <div class="field-group">
+        <div class="field-label">Password</div>
+        <input type="password" id="password" placeholder="Choose a strong password" maxlength="100" autocomplete="new-password"/>
+        <div class="field-hint">At least 6 characters recommended</div>
+      </div>
+
+      <div class="field-group">
+        <div class="field-label">Confirm Password</div>
+        <input type="password" id="confirmPassword" placeholder="Re-enter your password" maxlength="100" autocomplete="new-password"/>
+      </div>
+
+      <button class="btn-primary" onclick="register()">
+        <span class="btn-shimmer"></span>
+        Create Account
+      </button>
+
+      <div class="msg" id="msg"></div>
+
+      <div class="form-footer">
+        Already have an account? <a href="login.html">Sign in →</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Decorative -->
+  <div class="right-deco">
+    <div class="deco-ring"></div>
+    <div class="deco-grid">
+      <div class="deco-dot"></div><div class="deco-dot"></div><div class="deco-dot"></div><div class="deco-dot"></div>
+      <div class="deco-dot"></div><div class="deco-dot"></div><div class="deco-dot"></div><div class="deco-dot"></div>
+      <div class="deco-dot"></div><div class="deco-dot"></div><div class="deco-dot"></div><div class="deco-dot"></div>
+      <div class="deco-dot"></div><div class="deco-dot"></div><div class="deco-dot"></div><div class="deco-dot"></div>
+    </div>
+    <div class="deco-content">
+      <div class="deco-eyebrow">Why JezanPlan</div>
+      <div class="deco-title">Move with<br/><em>clarity.</em></div>
+      <div class="deco-perks">
+        <div class="perk">
+          <div class="perk-icon">◈</div>
+          <div>
+            <div class="perk-title">Smart Prioritization</div>
+            <div class="perk-desc">Automatically surfaces what matters most today</div>
+          </div>
+        </div>
+        <div class="perk">
+          <div class="perk-icon">◈</div>
+          <div>
+            <div class="perk-title">Visual Calendar</div>
+            <div class="perk-desc">See your entire week at a glance with deadline tracking</div>
+          </div>
+        </div>
+        <div class="perk">
+          <div class="perk-icon">◈</div>
+          <div>
+            <div class="perk-title">Progress Reports</div>
+            <div class="perk-desc">Understand your productivity patterns over time</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function register() {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+      const confirm  = document.getElementById('confirmPassword').value;
+
+      if (!username || !password || !confirm) return showMsg('Please fill in all fields.', 'error');
+      if (password !== confirm) return showMsg('Passwords do not match.', 'error');
+      if (password.length < 6) return showMsg('Password must be at least 6 characters.', 'error');
+
+      try {
+        const res = await fetch('http://localhost:8080/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          showMsg('Account created! Redirecting to login...', 'success');
+          setTimeout(() => window.location.href = 'login.html', 1800);
+        } else {
+          showMsg(data.message || 'Registration failed.', 'error');
+        }
+      } catch (e) {
+        showMsg('Cannot connect to server. Is it running?', 'error');
+      }
+    }
+
+    function showMsg(text, type) {
+      const el = document.getElementById('msg');
+      el.textContent = text;
+      el.className = 'msg ' + type;
+      el.style.display = 'block';
+    }
+
+    document.addEventListener('keydown', e => { if (e.key === 'Enter') register(); });
+  </script>
+</body>
+</html>
