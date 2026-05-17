@@ -62,7 +62,6 @@
     @keyframes pulse1 { from { transform: scale(1); } to { transform: scale(1.12) translate(-20px, 20px); } }
     @keyframes pulse2 { from { transform: scale(1); } to { transform: scale(1.08) translate(15px, -15px); } }
 
-    /* Right decorative panel */
     .right-deco {
       position: relative; z-index: 1;
       flex: 0 0 420px;
@@ -133,7 +132,6 @@
     .perk-title { font-size: 0.85rem; font-weight: 600; color: var(--text); margin-bottom: 2px; }
     .perk-desc { font-size: 0.77rem; color: var(--muted); line-height: 1.5; }
 
-    /* Left: Form */
     .left-panel {
       flex: 1; order: 1;
       display: flex; align-items: center; justify-content: center;
@@ -261,7 +259,6 @@
   <div class="atm atm-1"></div>
   <div class="atm atm-2"></div>
 
-  <!-- Left: Form -->
   <div class="left-panel">
     <div class="form-container">
       <div class="form-header">
@@ -298,7 +295,6 @@
     </div>
   </div>
 
-  <!-- Right: Decorative -->
   <div class="right-deco">
     <div class="deco-ring"></div>
     <div class="deco-grid">
@@ -347,7 +343,7 @@
       if (password.length < 6) return showMsg('Password must be at least 6 characters.', 'error');
 
       try {
-        const res = await fetch('http://localhost:8080/register', {
+        const res = await fetch('/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, password })
@@ -360,7 +356,7 @@
           showMsg(data.message || 'Registration failed.', 'error');
         }
       } catch (e) {
-        showMsg('Cannot connect to server. Is it running?', 'error');
+        showMsg('Cannot connect to server.', 'error');
       }
     }
 

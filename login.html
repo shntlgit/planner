@@ -42,7 +42,6 @@
       position: relative;
     }
 
-    /* Luxury grid noise overlay */
     body::before {
       content: '';
       position: fixed; inset: 0; z-index: 0;
@@ -53,7 +52,6 @@
       pointer-events: none;
     }
 
-    /* Atmospheric glows */
     .atm {
       position: fixed; border-radius: 50%; filter: blur(120px);
       pointer-events: none; z-index: 0;
@@ -66,7 +64,6 @@
     @keyframes pulse2 { from { transform: scale(1) translate(0,0); } to { transform: scale(1.15) translate(-15px, -20px); } }
     @keyframes pulse3 { from { opacity: 0.5; transform: translate(-50%,-50%) scale(1); } to { opacity: 1; transform: translate(-50%,-50%) scale(1.2); } }
 
-    /* Left decorative panel */
     .left-panel {
       position: relative; z-index: 1;
       flex: 0 0 480px;
@@ -153,7 +150,6 @@
     }
     .pstat-lbl { font-size: 0.72rem; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; margin-top: 2px; }
 
-    /* Right: Login form */
     .right-panel {
       flex: 1;
       display: flex; align-items: center; justify-content: center;
@@ -279,14 +275,6 @@
     }
     .form-footer a:hover { color: var(--mauve); }
 
-    .form-divider {
-      display: flex; align-items: center; gap: 12px;
-      margin: 28px 0; color: var(--muted); font-size: 0.75rem;
-    }
-    .form-divider::before, .form-divider::after {
-      content: ''; flex: 1; height: 1px; background: var(--border);
-    }
-
     @media (max-width: 900px) {
       .left-panel { display: none; }
     }
@@ -297,7 +285,6 @@
   <div class="atm atm-2"></div>
   <div class="atm atm-3"></div>
 
-  <!-- Left decorative panel -->
   <div class="left-panel">
     <div class="panel-ornament"></div>
     <div class="panel-lines">
@@ -330,7 +317,6 @@
     </div>
   </div>
 
-  <!-- Right: Form -->
   <div class="right-panel">
     <div class="form-container">
       <div class="form-header">
@@ -371,7 +357,7 @@
       const password = document.getElementById('password').value;
       if (!username || !password) return showMsg('Please fill in all fields.', 'error');
       try {
-        const res = await fetch('http://localhost:8080/login', {
+        const res = await fetch('/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, password })
@@ -386,7 +372,7 @@
           showMsg(data.message || 'Invalid credentials.', 'error');
         }
       } catch (e) {
-        showMsg('Cannot connect to server. Is it running?', 'error');
+        showMsg('Cannot connect to server.', 'error');
       }
     }
 
