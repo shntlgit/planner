@@ -10,10 +10,10 @@ import java.util.stream.Collectors;
 
 public class TaskServer {
 
-    static final String DB_URL  = "jdbc:mysql://localhost:3306/taskflow_db";
-    static final String DB_USER = "root";
-    static final String DB_PASS = "";
-    static final int    PORT    = 8080;
+    static final String DB_URL  = System.getenv().getOrDefault("MYSQL_URL", "jdbc:mysql://localhost:3306/taskflow_db");
+    static final String DB_USER = System.getenv().getOrDefault("MYSQL_USER", "root");
+    static final String DB_PASS = System.getenv().getOrDefault("MYSQL_PASSWORD", "");
+    static final int    PORT    = Integer.parseInt(System.getenv().getOrDefault("PORT", "8080"));
 
     public static void main(String[] args) throws Exception {
         Class.forName("com.mysql.cj.jdbc.Driver");
@@ -285,8 +285,6 @@ public class TaskServer {
     }
 
     // ── GET PROFILE ──
-    // Requires: ALTER TABLE users ADD COLUMN bio TEXT;
-    //           ALTER TABLE users ADD COLUMN profile_pic MEDIUMTEXT;
     static class GetProfileHandler implements HttpHandler {
         public void handle(HttpExchange ex) throws IOException {
             if (handlePreflight(ex)) return;
@@ -323,10 +321,6 @@ public class TaskServer {
     }
 
     // ── UPDATE PROFILE ──
-    // FIX: the original code had a bug where returnedUsername was assigned from
-    //      itself (newUser = newUser), causing a NullPointerException when newUser
-    //      was null. Now we fetch the current username from DB when newUser is not
-    //      provided, so the response always returns the correct username.
     static class UpdateProfileHandler implements HttpHandler {
         public void handle(HttpExchange ex) throws IOException {
             if (handlePreflight(ex)) return;
@@ -342,7 +336,6 @@ public class TaskServer {
             }
 
             try (Connection conn = getConnection()) {
-                // Check username uniqueness if changing
                 if (newUser != null && !newUser.isEmpty()) {
                     PreparedStatement check = conn.prepareStatement(
                         "SELECT id FROM users WHERE username = ? AND id != ?");
@@ -355,7 +348,7 @@ public class TaskServer {
 
                 boolean hasUser = newUser != null && !newUser.isEmpty();
                 boolean hasPass = newPass != null && !newPass.isEmpty();
-                boolean hasBio  = newBio  != null; // allow empty string to clear bio
+                boolean hasBio  = newBio  != null;
                 boolean hasPic  = newPic  != null && !newPic.isEmpty();
 
                 if (!hasUser && !hasPass && !hasBio && !hasPic) {
@@ -379,8 +372,6 @@ public class TaskServer {
                 ps.setInt(idx, Integer.parseInt(userIdStr));
                 ps.executeUpdate();
 
-                // FIX: fetch the actual current username from DB instead of using
-                // the potentially-null newUser variable for the response.
                 String returnedUsername;
                 if (hasUser) {
                     returnedUsername = newUser;
