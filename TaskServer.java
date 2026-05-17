@@ -29,6 +29,7 @@ public class TaskServer {
         server.createContext("/deleteTask",        new DeleteTaskHandler());
         server.createContext("/updateProfile",     new UpdateProfileHandler());
         server.createContext("/getProfile",        new GetProfileHandler());
+        server.createContext("/",                  new StaticHandler());
 
         server.setExecutor(null);
         server.start();
@@ -91,6 +92,30 @@ public class TaskServer {
             int end = start;
             while (end < json.length() && json.charAt(end) != ',' && json.charAt(end) != '}') end++;
             return json.substring(start, end).trim();
+        }
+    }
+
+    // ── STATIC FILE HANDLER ──
+    static class StaticHandler implements HttpHandler {
+        public void handle(HttpExchange ex) throws IOException {
+            String path = ex.getRequestURI().getPath();
+            if (path.equals("/")) path = "/login.html";
+            File file = new File("." + path);
+            if (!file.exists()) {
+                String msg = "404 Not Found";
+                ex.sendResponseHeaders(404, msg.length());
+                ex.getResponseBody().write(msg.getBytes());
+                ex.getResponseBody().close();
+                return;
+            }
+            String contentType = path.endsWith(".html") ? "text/html" :
+                                 path.endsWith(".css")  ? "text/css"  :
+                                 path.endsWith(".js")   ? "application/javascript" : "text/plain";
+            ex.getResponseHeaders().add("Content-Type", contentType);
+            byte[] bytes = java.nio.file.Files.readAllBytes(file.toPath());
+            ex.sendResponseHeaders(200, bytes.length);
+            ex.getResponseBody().write(bytes);
+            ex.getResponseBody().close();
         }
     }
 
