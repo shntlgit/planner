@@ -68,6 +68,19 @@ public class TaskServer {
         return false;
     }
 
+    /**
+     * Returns true if the request is NOT a POST.
+     * In that case it forwards the request to StaticHandler so that
+     * visiting /register.html, /login.html, etc. works correctly.
+     */
+    static boolean forwardIfNotPost(HttpExchange ex) throws IOException {
+        if (!"POST".equalsIgnoreCase(ex.getRequestMethod())) {
+            new StaticHandler().handle(ex);
+            return true;
+        }
+        return false;
+    }
+
     static String jsonGet(String json, String key) {
         int idx = json.indexOf("\"" + key + "\"");
         if (idx == -1) return null;
@@ -99,18 +112,40 @@ public class TaskServer {
     static class StaticHandler implements HttpHandler {
         public void handle(HttpExchange ex) throws IOException {
             String path = ex.getRequestURI().getPath();
+
+            // Redirect root to login
             if (path.equals("/")) path = "/login.html";
-            File file = new File("." + path);
-            if (!file.exists()) {
+
+            // Only serve files that actually end in a known extension.
+            // Anything that looks like a bare API path with no extension
+            // (e.g. /register, /login) gets a 404 instead of a blank response.
+            if (!path.contains(".")) {
                 String msg = "404 Not Found";
-                ex.sendResponseHeaders(404, msg.length());
-                ex.getResponseBody().write(msg.getBytes());
+                byte[] bytes = msg.getBytes(StandardCharsets.UTF_8);
+                ex.sendResponseHeaders(404, bytes.length);
+                ex.getResponseBody().write(bytes);
                 ex.getResponseBody().close();
                 return;
             }
-            String contentType = path.endsWith(".html") ? "text/html" :
-                                 path.endsWith(".css")  ? "text/css"  :
-                                 path.endsWith(".js")   ? "application/javascript" : "text/plain";
+
+            File file = new File("." + path);
+            if (!file.exists() || !file.isFile()) {
+                String msg = "404 Not Found: " + path;
+                byte[] bytes = msg.getBytes(StandardCharsets.UTF_8);
+                ex.sendResponseHeaders(404, bytes.length);
+                ex.getResponseBody().write(bytes);
+                ex.getResponseBody().close();
+                return;
+            }
+
+            String contentType = path.endsWith(".html") ? "text/html; charset=utf-8" :
+                                 path.endsWith(".css")  ? "text/css"                 :
+                                 path.endsWith(".js")   ? "application/javascript"   :
+                                 path.endsWith(".png")  ? "image/png"                :
+                                 path.endsWith(".jpg") || path.endsWith(".jpeg") ? "image/jpeg" :
+                                 path.endsWith(".ico")  ? "image/x-icon"             :
+                                 "text/plain";
+
             ex.getResponseHeaders().add("Content-Type", contentType);
             byte[] bytes = java.nio.file.Files.readAllBytes(file.toPath());
             ex.sendResponseHeaders(200, bytes.length);
@@ -123,11 +158,17 @@ public class TaskServer {
     static class RegisterHandler implements HttpHandler {
         public void handle(HttpExchange ex) throws IOException {
             if (handlePreflight(ex)) return;
+            // If browser is requesting /register.html, serve the file instead
+            if (forwardIfNotPost(ex)) return;
+
             String body     = readBody(ex);
             String username = jsonGet(body, "username");
             String password = jsonGet(body, "password");
             if (username == null || password == null || username.isEmpty() || password.isEmpty()) {
                 sendJson(ex, 400, "{\"message\":\"Username and password are required.\"}"); return;
+            }
+            if (password.length() < 6) {
+                sendJson(ex, 400, "{\"message\":\"Password must be at least 6 characters.\"}"); return;
             }
             try (Connection conn = getConnection()) {
                 PreparedStatement check = conn.prepareStatement("SELECT id FROM users WHERE username = ?");
@@ -151,6 +192,8 @@ public class TaskServer {
     static class LoginHandler implements HttpHandler {
         public void handle(HttpExchange ex) throws IOException {
             if (handlePreflight(ex)) return;
+            if (forwardIfNotPost(ex)) return;
+
             String body     = readBody(ex);
             String username = jsonGet(body, "username");
             String password = jsonGet(body, "password");
@@ -179,6 +222,8 @@ public class TaskServer {
     static class AddTaskHandler implements HttpHandler {
         public void handle(HttpExchange ex) throws IOException {
             if (handlePreflight(ex)) return;
+            if (forwardIfNotPost(ex)) return;
+
             String body      = readBody(ex);
             String userIdStr = jsonGet(body, "userId");
             String taskName  = jsonGet(body, "taskName");
@@ -186,7 +231,9 @@ public class TaskServer {
             if (userIdStr == null || taskName == null || deadline == null) {
                 sendJson(ex, 400, "{\"message\":\"Missing fields.\"}"); return;
             }
-            deadline = deadline.replace("T", " ") + ":00";
+            // Replace T separator; only append :00 if seconds are not already present
+            deadline = deadline.replace("T", " ");
+            if (deadline.chars().filter(c -> c == ':').count() < 2) deadline += ":00";
             try (Connection conn = getConnection()) {
                 PreparedStatement ps = conn.prepareStatement(
                     "INSERT INTO tasks (user_id, task_name, deadline) VALUES (?, ?, ?)");
@@ -206,6 +253,8 @@ public class TaskServer {
     static class GetTasksHandler implements HttpHandler {
         public void handle(HttpExchange ex) throws IOException {
             if (handlePreflight(ex)) return;
+            // GET is valid here (query param request), so no forwardIfNotPost
+
             String query  = ex.getRequestURI().getQuery();
             String userId = null;
             if (query != null && query.startsWith("userId=")) userId = query.substring(7);
@@ -241,6 +290,8 @@ public class TaskServer {
     static class UpdateTaskHandler implements HttpHandler {
         public void handle(HttpExchange ex) throws IOException {
             if (handlePreflight(ex)) return;
+            if (forwardIfNotPost(ex)) return;
+
             String body     = readBody(ex);
             String idStr    = jsonGet(body, "id");
             String taskName = jsonGet(body, "taskName");
@@ -248,7 +299,9 @@ public class TaskServer {
             if (idStr == null || taskName == null || deadline == null) {
                 sendJson(ex, 400, "{\"message\":\"Missing fields.\"}"); return;
             }
-            deadline = deadline.replace("T", " ") + ":00";
+            // Replace T separator; only append :00 if seconds are not already present
+            deadline = deadline.replace("T", " ");
+            if (deadline.chars().filter(c -> c == ':').count() < 2) deadline += ":00";
             try (Connection conn = getConnection()) {
                 PreparedStatement ps = conn.prepareStatement(
                     "UPDATE tasks SET task_name = ?, deadline = ? WHERE id = ?");
@@ -268,6 +321,8 @@ public class TaskServer {
     static class UpdateTaskStatusHandler implements HttpHandler {
         public void handle(HttpExchange ex) throws IOException {
             if (handlePreflight(ex)) return;
+            if (forwardIfNotPost(ex)) return;
+
             String body   = readBody(ex);
             String idStr  = jsonGet(body, "id");
             String status = jsonGet(body, "status");
@@ -294,6 +349,8 @@ public class TaskServer {
     static class DeleteTaskHandler implements HttpHandler {
         public void handle(HttpExchange ex) throws IOException {
             if (handlePreflight(ex)) return;
+            if (forwardIfNotPost(ex)) return;
+
             String body  = readBody(ex);
             String idStr = jsonGet(body, "id");
             if (idStr == null) { sendJson(ex, 400, "{\"message\":\"Missing task id.\"}"); return; }
@@ -313,6 +370,8 @@ public class TaskServer {
     static class GetProfileHandler implements HttpHandler {
         public void handle(HttpExchange ex) throws IOException {
             if (handlePreflight(ex)) return;
+            // GET is valid here (query param request), so no forwardIfNotPost
+
             String query  = ex.getRequestURI().getQuery();
             String userId = null;
             if (query != null) {
@@ -349,6 +408,8 @@ public class TaskServer {
     static class UpdateProfileHandler implements HttpHandler {
         public void handle(HttpExchange ex) throws IOException {
             if (handlePreflight(ex)) return;
+            if (forwardIfNotPost(ex)) return;
+
             String body      = readBody(ex);
             String userIdStr = jsonGet(body, "userId");
             String newUser   = jsonGet(body, "username");
